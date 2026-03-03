@@ -41,6 +41,12 @@ const features = [
         title: 'Process Manager',
         desc: 'Identify top CPU & RAM consumers. Kill runaway processes instantly with one click — no Terminal needed.',
     },
+    {
+        icon: '💡',
+        bg: 'rgba(168,85,247,0.12)',
+        title: 'AI Advice',
+        desc: 'Proactively identify stale projects and reclaim gigabytes by pruning unused node_modules or target folders.',
+    },
 ]
 
 export default function Page() {
@@ -116,6 +122,10 @@ export default function Page() {
                                 <div className="preview-nav-item">
                                     <div className="preview-nav-icon" style={{ background: 'rgba(251,191,36,0.12)' }}>💾</div>
                                     Disk Lens
+                                </div>
+                                <div className="preview-nav-item">
+                                    <div className="preview-nav-icon" style={{ background: 'rgba(168,85,247,0.12)' }}>💡</div>
+                                    AI Advice
                                 </div>
                                 <div className="preview-separator" />
                                 <div className="preview-nav-label">Cleanup</div>
