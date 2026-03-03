@@ -54,8 +54,8 @@ export default function Page() {
                 </a>
                 <div className="nav-actions">
                     <a href={GITHUB_URL} className="nav-link" target="_blank" rel="noopener noreferrer">GitHub</a>
-                    <a href={DMG_URL} className="btn-download" download>
-                        ↓ Download Free
+                    <a href="#install" className="btn-download">
+                        ↓ Install Now
                     </a>
                 </div>
             </nav>
@@ -74,8 +74,8 @@ export default function Page() {
                     manage processes and ports — all in one premium native app.
                 </p>
                 <div className="hero-cta">
-                    <a href={DMG_URL} className="btn-download large" download>
-                        ⬇️ Download for Mac
+                    <a href="#install" className="btn-download large">
+                        ⚡ Install Now
                     </a>
                     <a href={GITHUB_URL} className="nav-link" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9rem' }}>
                         View on GitHub →
@@ -223,7 +223,7 @@ export default function Page() {
             <div className="divider" />
 
             {/* INSTALL */}
-            <section className="features" style={{ paddingBottom: '2rem' }}>
+            <section className="features" style={{ paddingBottom: '2rem' }} id="install">
                 <div className="section-label">Quick Install</div>
                 <h2 className="section-title">Install in 5 seconds</h2>
                 <p className="section-sub">
@@ -260,10 +260,20 @@ export default function Page() {
             {/* CTA */}
             <section className="cta-section">
                 <h2 className="cta-title">Ready to clean your Mac?</h2>
-                <p className="cta-sub">Download DevUtils Desktop for free. No account, no ads, no tracking.</p>
-                <a href={DMG_URL} className="btn-download large" download>
-                    ⬇️ Download for macOS — Free
-                </a>
+                <p className="cta-sub">Paste this in Terminal — installs in 5 seconds, no account, no ads.</p>
+                <div style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '50px',
+                    padding: '12px 28px',
+                    display: 'inline-block',
+                    fontFamily: "'SF Mono', 'Fira Code', monospace",
+                    fontSize: '0.82rem',
+                    color: '#a78bfa',
+                    position: 'relative',
+                }}>
+                    curl -sL devutils-mac.vercel.app/install.sh | bash
+                </div>
                 <p className="cta-note">macOS 12 Monterey or later · Apple Silicon (M1–M4) · 3 MB</p>
             </section>
 
