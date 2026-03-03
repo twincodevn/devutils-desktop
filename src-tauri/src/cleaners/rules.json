@@ -1,0 +1,112 @@
+{
+    "rules": [
+        {
+            "id": "clean_xcode_derived",
+            "name": "Xcode Derived Data",
+            "category": "Developer",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Developer/Xcode/DerivedData",
+                "~/Library/Developer/Xcode/Archives",
+                "~/Library/Developer/Xcode/iOS Device Logs"
+            ]
+        },
+        {
+            "id": "clean_homebrew",
+            "name": "Homebrew Cache",
+            "category": "Developer",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Caches/Homebrew",
+                "~/.cache/Homebrew"
+            ]
+        },
+        {
+            "id": "clean_pip_cache",
+            "name": "pip Cache",
+            "category": "Developer",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Caches/pip"
+            ]
+        },
+        {
+            "id": "clean_cocoapods_cache",
+            "name": "CocoaPods Cache",
+            "category": "Developer",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Caches/CocoaPods"
+            ]
+        },
+        {
+            "id": "clean_gradle_maven",
+            "name": "Gradle & Maven",
+            "category": "Developer",
+            "risk": "moderate",
+            "paths": [
+                "~/.gradle/caches",
+                "~/.m2/repository"
+            ]
+        },
+        {
+            "id": "clean_system_logs",
+            "name": "System Logs",
+            "category": "System",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Logs",
+                "/Library/Logs"
+            ]
+        },
+        {
+            "id": "clean_browser_cache",
+            "name": "All Browser Caches",
+            "category": "Browsers",
+            "risk": "moderate",
+            "paths": [
+                "~/Library/Caches/com.apple.Safari",
+                "~/Library/Caches/Google/Chrome",
+                "~/Library/Caches/Firefox",
+                "~/Library/Caches/com.microsoft.edgemac",
+                "~/Library/Caches/BraveSoftware"
+            ]
+        },
+        {
+            "id": "clean_user_cache",
+            "name": "User Cache",
+            "category": "System Junk",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Caches"
+            ]
+        },
+        {
+            "id": "clean_crash_reports",
+            "name": "Crash Reports",
+            "category": "App Leftovers",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Logs/DiagnosticReports"
+            ]
+        },
+        {
+            "id": "clean_saved_state",
+            "name": "Saved App State",
+            "category": "App Leftovers",
+            "risk": "safe",
+            "paths": [
+                "~/Library/Saved Application State"
+            ]
+        },
+        {
+            "id": "clean_trash",
+            "name": "Empty Trash",
+            "category": "App Leftovers",
+            "risk": "caution",
+            "paths": [
+                "~/.Trash"
+            ]
+        }
+    ]
+}

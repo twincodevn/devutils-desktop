@@ -1,14 +1,11 @@
+mod cleaners;
+mod system;
+
+use cleaners::predictive::ProjectRecommendation;
+use cleaners::CleanResult;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct CleanResult {
-    pub category: String,
-    pub command_name: String,
-    pub success: bool,
-    pub output: String,
-    pub error: String,
-}
+use system::metrics::SystemStats;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ScanResult {
@@ -164,29 +161,42 @@ fn scan_system() -> ScanSummary {
 
 #[tauri::command]
 fn clean_user_cache() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!("rm -rf {}/Library/Caches/* 2>&1", home));
-    CleanResult {
-        category: "System Junk".into(),
-        command_name: "User Cache".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
+    cleaners::execute_rule("clean_user_cache")
 }
 
 #[tauri::command]
 fn clean_system_logs() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let cmd = format!("rm -rf {home}/Library/Logs/* 2>&1");
-    let (ok, out, err) = run_shell(&cmd);
-    CleanResult {
-        category: "System Junk".into(),
-        command_name: "System Logs".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
+    cleaners::execute_rule("clean_system_logs")
+}
+
+#[tauri::command]
+fn clean_xcode_derived() -> CleanResult {
+    cleaners::execute_rule("clean_xcode_derived")
+}
+
+#[tauri::command]
+fn clean_homebrew() -> CleanResult {
+    cleaners::execute_rule("clean_homebrew")
+}
+
+#[tauri::command]
+fn clean_pip_cache() -> CleanResult {
+    cleaners::execute_rule("clean_pip_cache")
+}
+
+#[tauri::command]
+fn clean_cocoapods_cache() -> CleanResult {
+    cleaners::execute_rule("clean_cocoapods_cache")
+}
+
+#[tauri::command]
+fn clean_gradle_maven() -> CleanResult {
+    cleaners::execute_rule("clean_gradle_maven")
+}
+
+#[tauri::command]
+fn clean_browser_cache() -> CleanResult {
+    cleaners::execute_rule("clean_browser_cache")
 }
 
 #[tauri::command]
@@ -219,146 +229,43 @@ fn clean_dns_cache() -> CleanResult {
 }
 
 #[tauri::command]
-fn clean_xcode_derived() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let cmd = format!(
-        "rm -rf {home}/Library/Developer/Xcode/DerivedData/* 2>&1 && \
-         rm -rf {home}/Library/Developer/Xcode/Archives/* 2>&1 && \
-         rm -rf {home}/Library/Developer/Xcode/iOS\\ Device\\ Logs/* 2>&1"
-    );
-    let (ok, out, err) = run_shell(&cmd);
-    CleanResult {
-        category: "Developer".into(),
-        command_name: "Xcode Derived Data".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
-}
-
-#[tauri::command]
-fn clean_homebrew() -> CleanResult {
-    let (ok, out, err) =
-        run_shell("brew cleanup --prune=all -s 2>&1 && rm -rf $(brew --cache) 2>&1");
-    CleanResult {
-        category: "Developer".into(),
-        command_name: "Homebrew Cache".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
-}
-
-#[tauri::command]
-fn clean_pip_cache() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!(
-        "pip3 cache purge 2>/dev/null; rm -rf {}/Library/Caches/pip 2>&1",
-        home
-    ));
-    CleanResult {
-        category: "Developer".into(),
-        command_name: "pip Cache".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
-}
-
-#[tauri::command]
-fn clean_cocoapods_cache() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!(
-        "pod cache clean --all 2>/dev/null; rm -rf {}/Library/Caches/CocoaPods 2>&1",
-        home
-    ));
-    CleanResult {
-        category: "Developer".into(),
-        command_name: "CocoaPods Cache".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
-}
-
-#[tauri::command]
-fn clean_gradle_maven() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!(
-        "rm -rf {}/.gradle/caches/* 2>&1 && rm -rf {}/.m2/repository/* 2>&1",
-        home, home
-    ));
-    CleanResult {
-        category: "Developer".into(),
-        command_name: "Gradle & Maven Cache".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
-}
-
-#[tauri::command]
-fn clean_browser_cache() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let cmd = format!(
-        "rm -rf {home}/Library/Caches/com.apple.Safari/* 2>&1 && \
-         rm -rf {home}/Library/Caches/Google/Chrome/* 2>&1 && \
-         rm -rf {home}/Library/Caches/Firefox/* 2>&1 && \
-         rm -rf {home}/Library/Caches/com.microsoft.edgemac/* 2>&1 && \
-         rm -rf {home}/Library/Caches/BraveSoftware/* 2>&1"
-    );
-    let (ok, out, err) = run_shell(&cmd);
-    CleanResult {
-        category: "Browser".into(),
-        command_name: "All Browser Caches".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
-}
-
-#[tauri::command]
 fn clean_crash_reports() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!(
-        "rm -rf {}/Library/Logs/DiagnosticReports/* 2>&1",
-        home
-    ));
-    CleanResult {
-        category: "App Leftovers".into(),
-        command_name: "Crash Reports".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
+    cleaners::execute_rule("clean_crash_reports")
 }
 
 #[tauri::command]
 fn clean_saved_state() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!(
-        "rm -rf {}/Library/Saved\\ Application\\ State/* 2>&1",
-        home
-    ));
-    CleanResult {
-        category: "App Leftovers".into(),
-        command_name: "Saved Application State".into(),
-        success: ok,
-        output: out,
-        error: err,
-    }
+    cleaners::execute_rule("clean_saved_state")
 }
 
 #[tauri::command]
 fn clean_trash() -> CleanResult {
-    let home = std::env::var("HOME").unwrap_or_default();
-    let (ok, out, err) = run_shell(&format!("rm -rf {}/.Trash/* 2>&1", home));
-    CleanResult {
-        category: "System".into(),
-        command_name: "Trash".into(),
-        success: ok,
-        output: out,
-        error: err,
+    cleaners::execute_rule("clean_trash")
+}
+
+#[tauri::command]
+fn get_cleanup_recommendations() -> Vec<ProjectRecommendation> {
+    cleaners::predictive::get_recommendations()
+}
+
+#[tauri::command]
+fn clean_stale_project(path: String, folder: String) -> CleanResult {
+    let p = std::path::Path::new(&path).join(&folder);
+    match cleaners::fs_ops::safe_remove_dir_contents(&p) {
+        Ok(_) => CleanResult {
+            category: "Predictive".into(),
+            command_name: format!("Prune {} in {}", folder, path),
+            success: true,
+            output: format!("Dọn dẹp thành công {} để giải phóng không gian.", folder),
+            error: "".into(),
+        },
+        Err(e) => CleanResult {
+            category: "Predictive".into(),
+            command_name: format!("Prune {} in {}", folder, path),
+            success: false,
+            output: "".into(),
+            error: e,
+        },
     }
 }
 
@@ -394,84 +301,9 @@ fn rebuild_spotlight() -> CleanResult {
 // SYSTEM STATS
 // ============================================================
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct SystemStats {
-    pub cpu_usage: f64,
-    pub ram_total_gb: f64,
-    pub ram_used_gb: f64,
-    pub ram_pct: f64,
-    pub disk_total_gb: f64,
-    pub disk_used_gb: f64,
-    pub disk_free_gb: f64,
-    pub disk_pct: f64,
-    pub battery_pct: i32,
-    pub battery_charging: bool,
-    pub uptime: String,
-}
-
 #[tauri::command]
 fn get_system_stats() -> SystemStats {
-    // CPU
-    let (_, cpu_out, _) =
-        run_shell("top -l 1 -n 0 | grep 'CPU usage' | awk '{print $3}' | tr -d '%'");
-    let cpu: f64 = cpu_out.trim().parse().unwrap_or(0.0);
-
-    // RAM
-    let (_, pages_free, _) = run_shell("vm_stat | awk '/Pages free/ {print $3}' | tr -d '.'");
-    let (_, pages_active, _) = run_shell("vm_stat | awk '/Pages active/ {print $3}' | tr -d '.'");
-    let (_, pages_inactive, _) =
-        run_shell("vm_stat | awk '/Pages inactive/ {print $3}' | tr -d '.'");
-    let (_, pages_wired, _) = run_shell("vm_stat | awk '/Pages wired/ {print $4}' | tr -d '.'");
-    let (_, pages_speculative, _) =
-        run_shell("vm_stat | awk '/Pages speculative/ {print $3}' | tr -d '.'");
-    let page_size: f64 = 16384.0; // Apple Silicon
-    let free: f64 = pages_free.trim().parse().unwrap_or(0.0);
-    let active: f64 = pages_active.trim().parse().unwrap_or(0.0);
-    let inactive: f64 = pages_inactive.trim().parse().unwrap_or(0.0);
-    let wired: f64 = pages_wired.trim().parse().unwrap_or(0.0);
-    let speculative: f64 = pages_speculative.trim().parse().unwrap_or(0.0);
-    let total_pages = free + active + inactive + wired + speculative;
-    let used_pages = active + wired;
-    let ram_total = (total_pages * page_size) / 1_073_741_824.0;
-    let ram_used = (used_pages * page_size) / 1_073_741_824.0;
-
-    // Disk
-    let (_, df_out, _) = run_shell("df -g / | tail -1 | awk '{print $2, $3, $4}'");
-    let parts: Vec<&str> = df_out.trim().split_whitespace().collect();
-    let disk_total: f64 = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0.0);
-    let disk_used: f64 = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-    let disk_free: f64 = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-
-    // Battery
-    let (_, batt_out, _) = run_shell("pmset -g batt | grep -o '[0-9]*%' | tr -d '%'");
-    let batt: i32 = batt_out.trim().parse().unwrap_or(-1);
-    let (_, charge_out, _) = run_shell("pmset -g batt | grep -c 'AC Power'");
-    let charging = charge_out.trim() == "1";
-
-    // Uptime
-    let (_, up_out, _) = run_shell("uptime | awk -F'up ' '{print $2}' | awk -F',' '{print $1}'");
-
-    SystemStats {
-        cpu_usage: cpu,
-        ram_total_gb: (ram_total * 10.0).round() / 10.0,
-        ram_used_gb: (ram_used * 10.0).round() / 10.0,
-        ram_pct: if ram_total > 0.0 {
-            ((ram_used / ram_total) * 100.0).round()
-        } else {
-            0.0
-        },
-        disk_total_gb: disk_total,
-        disk_used_gb: disk_used,
-        disk_free_gb: disk_free,
-        disk_pct: if disk_total > 0.0 {
-            ((disk_used / disk_total) * 100.0).round()
-        } else {
-            0.0
-        },
-        battery_pct: batt,
-        battery_charging: charging,
-        uptime: up_out.trim().to_string(),
-    }
+    system::metrics::get_stats()
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -770,9 +602,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             scan_system,
-            get_system_stats,
             get_disk_breakdown,
             get_system_info,
+            get_system_stats,
+            get_cleanup_recommendations,
+            clean_stale_project,
             get_network_info,
             get_top_processes,
             kill_process,
