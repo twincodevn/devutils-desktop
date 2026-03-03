@@ -222,6 +222,41 @@ export default function Page() {
 
             <div className="divider" />
 
+            {/* INSTALL */}
+            <section className="features" style={{ paddingBottom: '2rem' }}>
+                <div className="section-label">Quick Install</div>
+                <h2 className="section-title">Install in 5 seconds</h2>
+                <p className="section-sub">
+                    Paste this in Terminal. It downloads, installs, and opens the app automatically — no Gatekeeper warnings.
+                </p>
+                <div style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '14px',
+                    padding: '1.25rem 1.5rem',
+                    maxWidth: '700px',
+                    margin: '0 auto',
+                    fontFamily: "'SF Mono', 'Fira Code', 'Cascadia Code', monospace",
+                    fontSize: '0.85rem',
+                    color: '#a78bfa',
+                    wordBreak: 'break-all',
+                    textAlign: 'center',
+                    lineHeight: 1.8,
+                }}>
+                    <span style={{ color: '#6e6e82' }}>$</span>{' '}
+                    <span style={{ color: '#00d2a0' }}>curl</span>{' '}
+                    <span style={{ color: '#38bdf8' }}>-sL</span>{' '}
+                    https://devutils-mac.vercel.app/install.sh{' '}
+                    <span style={{ color: '#6e6e82' }}>|</span>{' '}
+                    <span style={{ color: '#00d2a0' }}>bash</span>
+                </div>
+                <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', color: '#3a3a50' }}>
+                    Or download the DMG manually from GitHub Releases
+                </p>
+            </section>
+
+            <div className="divider" />
+
             {/* CTA */}
             <section className="cta-section">
                 <h2 className="cta-title">Ready to clean your Mac?</h2>
