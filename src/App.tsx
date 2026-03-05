@@ -15,6 +15,9 @@ import { NetworkView } from "./components/views/NetworkView";
 import { ProcessesView } from "./components/views/ProcessesView";
 import { PortsView } from "./components/views/PortsView";
 import { CategoryDetail } from "./components/views/CategoryDetail";
+import { StartupView } from "./components/views/StartupView";
+import { LargeFilesView } from "./components/views/LargeFilesView";
+import { SettingsView } from "./components/views/SettingsView";
 
 export default function App() {
   const [page, setPage] = useState<Page>("smart-scan");
@@ -30,17 +33,14 @@ export default function App() {
   const [total, setTotal] = useState(0);
   const [logs, setLogs] = useState<{ t: string; ok: boolean }[]>([]);
 
-  // Memoized derived values
   const allSafeMemo = useMemo(() => categories.flatMap((c) => c.items.filter((i) => i.risk === "safe")), []);
   const activeCat = useMemo(() => categories.find((c) => c.page === page), [page]);
   const doneCount = useMemo(() => Object.values(statuses).filter((s) => s === "done").length, [statuses]);
 
-  // Page navigation with React transition
   const navigateTo = useCallback((p: Page) => {
     startTransition(() => setPage(p));
   }, []);
 
-  // --- SCAN ---
   const doScan = useCallback(async () => {
     setScanning(true); setScanData(null); setScanPct(0);
     const iv = setInterval(() => setScanPct((p) => Math.min(p + 3, 85)), 100);
@@ -106,6 +106,9 @@ export default function App() {
         {page === "processes" && <ProcessesView />}
         {page === "recommendations" && <RecommendationsView />}
         {page === "ports" && <PortsView />}
+        {page === "startup" && <StartupView />}
+        {page === "large-files" && <LargeFilesView />}
+        {page === "settings" && <SettingsView />}
 
         {activeCat && (
           <CategoryDetail

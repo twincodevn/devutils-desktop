@@ -12,8 +12,16 @@ export interface NetworkInfo { local_ip: string; public_ip: string; wifi_name: s
 export interface ProcessItem { pid: string; name: string; cpu: string; mem: string }
 export interface PortItem { port: string; pid: string; process: string; protocol: string }
 
+export interface StartupItem { name: string; path: string; enabled: boolean; kind: string }
+export interface LargeFile { path: string; name: string; size_bytes: number; size_display: string; extension: string }
+
 export type Status = "idle" | "running" | "done" | "error";
-export type Page = "smart-scan" | "system-junk" | "developer" | "browser" | "app-leftovers" | "optimize" | "disk-lens" | "sys-info" | "network" | "processes" | "ports" | "recommendations";
+export type Page =
+  | "smart-scan"
+  | "system-junk" | "developer" | "browser" | "app-leftovers" | "optimize"
+  | "disk-lens" | "sys-info" | "network" | "processes" | "ports"
+  | "recommendations"
+  | "startup" | "large-files" | "settings";
 
 export interface TaskItem { id: string; name: string; desc: string; command: string; risk: "safe" | "moderate" | "caution" }
 export interface Category { page: Page; icon: string; iconBg: string; title: string; subtitle: string; items: TaskItem[] }

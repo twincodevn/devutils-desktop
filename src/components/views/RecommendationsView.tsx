@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { ProjectRecommendation } from "../../types/predictive";
+import { IconLightbulb } from "../ui/Icons";
 
 export function RecommendationsView() {
     const [recs, setRecs] = useState<ProjectRecommendation[]>([]);
@@ -33,77 +34,83 @@ export function RecommendationsView() {
         setCleaning(null);
     };
 
+    const totalSavings = recs.reduce((sum, r) => sum + (r.potential_savings_bytes || 0), 0);
+    const formatSize = (bytes: number) => {
+        if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(1)} GB`;
+        if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(0)} MB`;
+        return `${(bytes / 1024).toFixed(0)} KB`;
+    };
+
     return (
         <div className="detail fade-up">
             <div className="detail-top">
-                <div className="detail-icon-box" style={{ background: "rgba(168,85,247,0.12)" }}>💡</div>
+                <div className="detail-icon-box" style={{ background: "rgba(168,85,247,0.12)" }}>
+                    <IconLightbulb size={24} color="#a855f7" />
+                </div>
                 <div className="detail-meta">
                     <h1 className="detail-title">AI Recommendations</h1>
-                    <p className="detail-desc">Phát hiện dự án cũ không chạm tới và dọn dẹp để giải phóng hàng GB.</p>
+                    <p className="detail-desc">Detect stale projects and reclaim disk space automatically.</p>
                 </div>
             </div>
 
             {loading ? (
-                <p className="scan-sub"><span className="spinning">⏳</span> Đang phân tích file hệ thống...</p>
-            ) : recs.length === 0 ? (
-                <div className="empty-state">
-                    <p className="scan-sub">🎉 Tuyệt vời! Không có dự án cũ nào chiếm dung lượng lớn.</p>
-                </div>
-            ) : (
-                <div className="recs-list">
-                    {recs.map((rec) => (
-                        <div key={rec.path} className="rec-card">
-                            <div className="rec-info">
-                                <h3 className="rec-project-name">{rec.name}</h3>
-                                <p className="rec-project-path">{rec.path}</p>
-                                <div className="rec-badge-row">
-                                    <span className="badge badge-stale">Stale Project</span>
-                                    <span className="badge badge-folder">{rec.target_folder}</span>
-                                </div>
-                            </div>
-                            <div className="rec-action-box">
-                                <div className="rec-savings">+{rec.potential_savings_display}</div>
-                                <button
-                                    className="btn btn-clean-small"
-                                    disabled={cleaning === rec.path}
-                                    onClick={() => cleanProject(rec)}
-                                >
-                                    {cleaning === rec.path ? "Cleaning..." : "Prune"}
-                                </button>
-                            </div>
-                        </div>
+                <div>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="skeleton skeleton-card" />
                     ))}
                 </div>
+            ) : recs.length === 0 ? (
+                <div className="empty-state">
+                    <IconLightbulb size={48} />
+                    <p className="scan-sub">🎉 Great! No stale projects found taking up significant space.</p>
+                </div>
+            ) : (
+                <>
+                    {totalSavings > 0 && (
+                        <div style={{
+                            background: "rgba(52,211,153,0.06)",
+                            border: "1px solid rgba(52,211,153,0.15)",
+                            borderRadius: "var(--r-sm)",
+                            padding: "12px 16px",
+                            marginBottom: "16px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center"
+                        }}>
+                            <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                                Total potential savings
+                            </span>
+                            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--green)" }}>
+                                +{formatSize(totalSavings)}
+                            </span>
+                        </div>
+                    )}
+                    <div className="recs-list">
+                        {recs.map((rec) => (
+                            <div key={rec.path} className="rec-card">
+                                <div className="rec-info">
+                                    <h3 className="rec-project-name">{rec.name}</h3>
+                                    <p className="rec-project-path">{rec.path}</p>
+                                    <div className="rec-badge-row">
+                                        <span className="badge badge-stale">Stale Project</span>
+                                        <span className="badge badge-folder">{rec.target_folder}</span>
+                                    </div>
+                                </div>
+                                <div className="rec-action-box">
+                                    <div className="rec-savings">+{rec.potential_savings_display}</div>
+                                    <button
+                                        className="btn-clean-small"
+                                        disabled={cleaning === rec.path}
+                                        onClick={() => cleanProject(rec)}
+                                    >
+                                        {cleaning === rec.path ? "Cleaning..." : "Prune"}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
             )}
-
-            <style>{`
-        .recs-list { display: flex; flex_direction: column; gap: 12px; margin-top: 20px; }
-        .rec-card { 
-          background: rgba(255,255,255,0.03); 
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 12px;
-          padding: 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          transition: all 0.2s;
-        }
-        .rec-card:hover { border-color: rgba(168,85,247,0.4); background: rgba(168,85,247,0.04); }
-        .rec-project-name { font-size: 16px; font-weight: 600; margin: 0; color: #f8fafc; }
-        .rec-project-path { font-size: 12px; color: #94a3b8; margin: 4px 0 8px 0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
-        .rec-badge-row { display: flex; gap: 6px; }
-        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
-        .badge-stale { background: rgba(245,158,11,0.1); color: #f59e0b; }
-        .badge-folder { background: rgba(56,189,248,0.1); color: #0ea5e9; }
-        .rec-action-box { text-align: right; }
-        .rec-savings { font-size: 18px; font-weight: 700; color: #10b981; margin-bottom: 8px; }
-        .btn-clean-small { 
-          background: #a855f7; color: white; border: none; padding: 6px 16px; border-radius: 6px; 
-          font-weight: 600; cursor: pointer; transition: opacity 0.2s;
-        }
-        .btn-clean-small:hover { opacity: 0.9; }
-        .btn-clean-small:disabled { opacity: 0.5; cursor: not-allowed; }
-      `}</style>
         </div>
     );
 }

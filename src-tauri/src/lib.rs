@@ -593,6 +593,147 @@ fn get_listening_ports() -> Vec<PortItem> {
 }
 
 // ============================================================
+// STARTUP ITEMS MANAGER
+// ============================================================
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct StartupItem {
+    pub name: String,
+    pub path: String,
+    pub enabled: bool,
+    pub kind: String,
+}
+
+#[tauri::command]
+fn get_startup_items() -> Vec<StartupItem> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let mut items = Vec::new();
+
+    // Scan LaunchAgents
+    let dirs = vec![
+        (format!("{}/Library/LaunchAgents", home), "User Agent"),
+        ("/Library/LaunchAgents".to_string(), "System Agent"),
+    ];
+
+    for (dir, kind) in dirs {
+        let (ok, out, _) = run_shell(&format!("ls -1 {} 2>/dev/null", dir));
+        if ok {
+            for line in out.trim().lines() {
+                if line.ends_with(".plist") {
+                    let name = line
+                        .replace(".plist", "")
+                        .split('.')
+                        .last()
+                        .unwrap_or(line)
+                        .to_string();
+                    let path = format!("{}/{}", dir, line);
+                    // Check if disabled
+                    let (_, disabled_check, _) = run_shell(&format!(
+                        "defaults read '{}' Disabled 2>/dev/null",
+                        path.replace(".plist", "")
+                    ));
+                    let enabled = !disabled_check.trim().contains("1");
+                    items.push(StartupItem {
+                        name,
+                        path,
+                        enabled,
+                        kind: kind.to_string(),
+                    });
+                }
+            }
+        }
+    }
+    items
+}
+
+#[tauri::command]
+fn toggle_startup_item(path: String, enabled: bool) -> CleanResult {
+    let cmd = if enabled {
+        format!("launchctl load -w '{}' 2>&1", path)
+    } else {
+        format!("launchctl unload -w '{}' 2>&1", path)
+    };
+    let (ok, out, err) = run_shell(&cmd);
+    CleanResult {
+        category: "Startup".into(),
+        command_name: format!("Toggle {}", path),
+        success: ok,
+        output: out,
+        error: err,
+    }
+}
+
+// ============================================================
+// LARGE FILE FINDER
+// ============================================================
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LargeFile {
+    pub path: String,
+    pub name: String,
+    pub size_bytes: u64,
+    pub size_display: String,
+    pub extension: String,
+}
+
+#[tauri::command]
+fn find_large_files() -> Vec<LargeFile> {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let (ok, out, _) = run_shell(&format!(
+        "find '{}' -type f -size +100M -not -path '*/.*' -not -path '*/Library/*' 2>/dev/null | head -30",
+        home
+    ));
+
+    if !ok {
+        return Vec::new();
+    }
+
+    let mut files: Vec<LargeFile> = Vec::new();
+    for line in out.trim().lines() {
+        if line.is_empty() {
+            continue;
+        }
+        let path = line.trim().to_string();
+        let (_, size_out, _) = run_shell(&format!("stat -f%z '{}' 2>/dev/null", path));
+        let size_bytes: u64 = size_out.trim().parse().unwrap_or(0);
+        if size_bytes == 0 {
+            continue;
+        }
+        let name = std::path::Path::new(&path)
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.clone());
+        let extension = std::path::Path::new(&path)
+            .extension()
+            .map(|e| e.to_string_lossy().to_string())
+            .unwrap_or_default();
+
+        files.push(LargeFile {
+            path,
+            name,
+            size_bytes,
+            size_display: format_size(size_bytes),
+            extension,
+        });
+    }
+
+    files.sort_by(|a, b| b.size_bytes.cmp(&a.size_bytes));
+    files
+}
+
+#[tauri::command]
+fn delete_file(path: String) -> CleanResult {
+    let (ok, out, err) = run_shell(&format!("rm -f '{}'", path));
+    CleanResult {
+        category: "Large Files".into(),
+        command_name: format!("Delete {}", path),
+        success: ok,
+        output: out,
+        error: err,
+    }
+}
+
+// ============================================================
 // MAIN APP ENTRY
 // ============================================================
 
@@ -611,6 +752,10 @@ pub fn run() {
             get_top_processes,
             kill_process,
             get_listening_ports,
+            get_startup_items,
+            toggle_startup_item,
+            find_large_files,
+            delete_file,
             clean_user_cache,
             clean_system_logs,
             clean_quicklook_cache,
